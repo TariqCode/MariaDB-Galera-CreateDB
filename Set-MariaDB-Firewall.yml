@@ -1,0 +1,16 @@
+---
+- name: Playbook for MariaDB Firewall
+  hosts: DB-Server-2
+  become: true
+  tasks:
+    - name: set Enable Ports in Firewall 
+      firewalld:
+       zone: public
+       port: 3306/tcp
+       permanent: true
+       state: enabled
+       immediate: yes
+    - name: reload service firewalld
+      systemd:
+       name: firewalld
+       state: reloaded

@@ -1,0 +1,36 @@
+---
+- name: install MariaDB
+  hosts: DB-Server-2
+  become: true
+  tasks:
+    - name: show Facts
+      debug: var=ansible_facts
+    - name: Copy MariaDB Repo
+      copy: 
+       src: /home/osboxes/Desktop/playBooks/Nginx-Maria-Galera_Project/Mariadb-rpo-centosStrem/
+       dest: /etc/yum.repos.d/
+    - name: Clean YUM packages 
+      shell: yum clean all 
+#    - name: update YUM packages & MetaData 
+ #     shell: "{{ item }}"
+ #     with_items:
+ #       - yum update
+  #      - yum upgrade
+ #       - yum install epel-release -y
+    - name: Install MariaDB on server
+      yum:
+        name: "{{ item }}"
+        disable_gpg_check: true
+        state: installed
+      with_items:
+        - MariaDB-server
+        - MariaDB-client
+        - galera-4
+    - name: check if MariaDB is it installed
+      shell: yum list installed | grep maria
+      register: out
+    - name: Start MariaDB Service if is it intalled
+      service:
+        name: mariadb
+        state: started
+      when: out.stdout != ""

@@ -1,0 +1,61 @@
+---
+- name: install GaleraCluster
+  hosts: DB-Server-2
+  become: true
+  tasks:
+    - name: show Facts
+      debug: var=ansible_facts
+    - name: copy Galera config file for client 4
+      copy: 
+       src: /home/osboxes/Desktop/playBooks/Nginx-Maria-Galera_Project/Galera-1/
+       dest: /etc/my.cnf.d/
+      when: ansible_facts['default_ipv4']['address'] == "192.168.1.214"
+      
+    - name: copy Galera config file for client 5
+      copy: 
+       src: /home/osboxes/Desktop/playBooks/Nginx-Maria-Galera_Project/Galera-2/
+       dest: /etc/my.cnf.d/
+      when: ansible_facts['default_ipv4']['address'] == "192.168.1.215"
+    - name: enable Galera ports under Firewall Setting 
+      firewalld:
+       port: "{{ item }}"
+       zone: public
+       permanent: true
+       state: enabled
+       immediate: yes
+      loop:
+        - 4567-4568/tcp
+        - 4444/tcp
+        - 4567/udp
+        - 3306/tcp
+    - name: reload service firewalld
+      systemd:
+        name: firewalld
+        state: reloaded
+    - name: install Galera Cluster
+      yum:
+        name: galera-4
+        disable_gpg_check: true
+        state: latest
+#    - name: Set Selinux ports Enforcing
+  #    shell: "{{ item }}"
+ #     loop:
+  #      - semanage port -a -t mysqld_port_t -p tcp 4567
+  #      - semanage port -a -t mysqld_port_t -p udp 4567
+  #      - semanage port -a -t mysqld_port_t -p tcp 4568
+   #     - semanage port -a -t mysqld_port_t -p tcp 4444
+    - name: Disable SeLinux Policy 
+      selinux:
+       policy: targeted
+       state: disable
+    
+    - name: start Galera Cluster phase-1
+      shell: systemctl stop mariadb
+    - name: Start Galera Cluster phase-2
+      shell: galera_new_cluster
+      when: ansible_facts['default_ipv4']['address'] == "192.168.1.214"
+    - name: Start Galera Cluster Phase-3
+      shell: systemctl start mariadb
+      when: ansible_facts['default_ipv4']['address'] == "192.168.1.215"
+       
+    

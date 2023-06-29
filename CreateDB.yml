@@ -1,0 +1,55 @@
+---
+- name: Create Tariq_DB
+  hosts: DB-Server-2
+  become_method: sudo
+  become: true
+  tasks:
+    - name: get Ansible Fact
+      debug: var=ansible_facts
+    - name: adjust server.cnf setting
+      lineinfile:
+        path: /etc/my.cnf.d/server.cnf
+       # path: ///home/osboxes/Desktop/1/1.txt
+        backup: yes
+        regexp: '^[mysqld]'
+        insertafter: '^[mysqld]'
+        line: skip-grant-table
+        state: present
+        #validate: '/etc/my.cnf.d/server.cnf -T -f %s'
+      when: ansible_facts['default_ipv4']['address'] == "192.168.1.214"
+      
+    - name: Restart MariaDB
+      service:
+        name: mariadb 
+        state: restarted 
+      when: ansible_facts['default_ipv4']['address'] == "192.168.1.214"
+    - name: install Prerequisites remote mysql 
+      yum:
+        name: "{{ item }}"
+      loop: 
+        - python36-PyMySQL.noarch
+        - python2-PyMySQL.noarch
+        
+    - name: Create a new database with name Tariq_DB
+      mysql_db:
+        login_user: root
+        login_password: T123
+        name: Tariq_DB
+        state: present
+      when: ansible_facts['default_ipv4']['address'] == "192.168.1.214" 
+    
+    - name: Remove Skip-Grant from server.cnf
+      lineinfile:
+        path: /etc/my.cnf.d/server.cnf
+        search_string: 'skip-grant-table'
+        line: ' '
+      when: ansible_facts['default_ipv4']['address'] == "192.168.1.214"
+      
+    - name: Restart MariaDB 
+      service:
+        name: Mariadb
+        state: restarted 
+      when: ansible_facts['default_ipv4']['address'] == "192.168.1.214"  
+        
+        
+      

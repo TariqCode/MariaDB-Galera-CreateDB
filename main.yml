@@ -1,0 +1,9 @@
+---
+- name: Import the Project for install MariaDB + Galera + Set FirewallPorts + Create DB 
+  import_playbook: "{{ item }}"
+  with_items:
+     - Install-MariaDB.yml
+     - Set-MariaDB-Firewall.yml
+     - GaleraCluster.yml
+     - CreateDB.yml
+     
